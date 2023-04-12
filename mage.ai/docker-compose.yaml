@@ -1,0 +1,23 @@
+version: '3'
+services:
+  postgres-db:
+    image: postgres:13-alpine3.17
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mage
+  server:
+    image: mageai/mageai
+
+    command: "/app/run_app.sh mage start 'mage-demo'"
+    environment:
+      - AWS_ACCESS_KEY_ID=''
+      - AWS_SECRET_ACCESS_KEY=''
+      - ENV=dev
+      - MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://postgres:postgres@postgres-db:5432/mage
+    ports:
+      - 6789:6789
+    restart: on-failure:5
