@@ -1,19 +1,47 @@
-FROM python:3.7-slim
+version: "3.7"
 
-RUN mkdir -p /opt/dagster/dagster_home /opt/dagster/app
+services:
+  # This service runs the postgres DB used by dagster for run storage, schedule storage,
+  # and event log storage.
+  docker_example_postgresql:
+    image: postgres:11
+    container_name: docker_example_postgresql
+    environment:
+      POSTGRES_USER: "postgres_user"
+      POSTGRES_PASSWORD: "postgres_password"
+      POSTGRES_DB: "postgres_db"
+    networks:
+      - docker_example_network
 
-RUN pip install dagit dagster-postgres dagster-aws
+  # This service runs dagit, which loads your user code from the user code container.
+  # Since our instance uses the QueuedRunCoordinator, any runs submitted from dagit will be put on
+  # a queue and later dequeued and launched by dagster-daemon.
+  docker_example_dagit:
+    build:
+      context: .
+      dockerfile: ./Dockerfile_dagster
+    entrypoint: ["sh", "/opt/dagster/app/entrypoint.sh"]
+    container_name: docker_example_dagit
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    environment:
+      DAGSTER_PG_USERNAME: "postgres_user"
+      DAGSTER_PG_PASSWORD: "postgres_password"
+      DAGSTER_PG_DB: "postgres_db"
+      DAGSTER_PG_HOST: docker_example_postgresql
+    volumes: # Make docker client accessible so we can terminate containers from dagit
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
+      - ./dagster-demo:/opt/dagster/app
+    networks:
+      - docker_example_network
+    depends_on:
+      - docker_example_postgresql
 
-# Copy your code and workspace to /opt/dagster/app
-COPY repo.py workspace.yaml /opt/dagster/app/
 
-ENV DAGSTER_HOME=/opt/dagster/dagster_home/
-
-# Copy dagster instance YAML to $DAGSTER_HOME
-COPY dagster.yaml /opt/dagster/dagster_home/
-
-WORKDIR /opt/dagster/app
-
-EXPOSE 3000
-
-ENTRYPOINT ["dagit", "-h", "0.0.0.0", "-p", "3000"]
+networks:
+  docker_example_network:
+    driver: bridge
+    name: docker_example_network

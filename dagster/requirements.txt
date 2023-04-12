@@ -1,0 +1,6 @@
+dagit==1.1.13
+dagster-postgres==0.17.13
+dagster==1.1.13
+sqlalchemy<2.0.0
+pandas
+pytest

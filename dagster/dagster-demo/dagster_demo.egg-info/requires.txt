@@ -1,0 +1,9 @@
+dagster
+dagster-cloud
+dagit
+dagster-postgres
+pandas
+
+[dev]
+dagit
+pytest
