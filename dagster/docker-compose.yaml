@@ -3,7 +3,7 @@ version: "3.7"
 services:
   # This service runs the postgres DB used by dagster for run storage, schedule storage,
   # and event log storage.
-  docker_example_postgresql:
+  postgresql:
     image: postgres:11
     container_name: docker_example_postgresql
     environment:
@@ -13,15 +13,31 @@ services:
     networks:
       - docker_example_network
 
+  dwh:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: dwh
+      POSTGRES_PASSWORD: dwh
+      POSTGRES_DB: dwh
+    ports:
+      - 5400:5432 
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
   # This service runs dagit, which loads your user code from the user code container.
   # Since our instance uses the QueuedRunCoordinator, any runs submitted from dagit will be put on
   # a queue and later dequeued and launched by dagster-daemon.
-  docker_example_dagit:
+  web_ui:
     build:
       context: .
       dockerfile: ./Dockerfile_dagster
     entrypoint: ["sh", "/opt/dagster/app/entrypoint.sh"]
-    container_name: docker_example_dagit
+    container_name: web_ui
     expose:
       - "3000"
     ports:
@@ -30,7 +46,7 @@ services:
       DAGSTER_PG_USERNAME: "postgres_user"
       DAGSTER_PG_PASSWORD: "postgres_password"
       DAGSTER_PG_DB: "postgres_db"
-      DAGSTER_PG_HOST: docker_example_postgresql
+      DAGSTER_PG_HOST: postgresql
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -38,7 +54,7 @@ services:
     networks:
       - docker_example_network
     depends_on:
-      - docker_example_postgresql
+      - postgresql
 
 
 networks:

@@ -9,6 +9,22 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=mage
+  dwh:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: dwh
+      POSTGRES_PASSWORD: dwh
+      POSTGRES_DB: dwh
+    ports:
+      - 5400:5432  
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
   server:
     image: mageai/mageai
 
@@ -18,6 +34,8 @@ services:
       - AWS_SECRET_ACCESS_KEY=''
       - ENV=dev
       - MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://postgres:postgres@postgres-db:5432/mage
+    volumes:
+      - ./mage-demo:/home/src/mage-demo
     ports:
       - 6789:6789
     restart: on-failure:5
