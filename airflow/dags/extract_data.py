@@ -7,6 +7,7 @@ from airflow.providers.amazon.aws.hooks.base_aws import BaseHook
 
 from airflow import Dataset
 
+import os
 
 from datetime import datetime, timedelta
 import requests
@@ -63,28 +64,6 @@ def extract_data():
         dt = kwargs['data_interval_start'].format('Y-MM')
         s3_details = BaseHook.get_connection(conn_id="aws_default")
 
-        columns_types = {
-            'VendorID': 'int',
-            'tpep_pickup_datetime': 'timestamp',
-            'tpep_dropoff_datetime': 'timestamp',
-            'passenger_count': 'int',
-            'trip_distance': 'float',
-            'RateCodeID': 'int',
-            'store_and_fwd_flag': 'string',
-            'PULocationID': 'int',
-            'DOLocationID': 'int',
-            'payment_type': 'int',
-            'fare_amount': 'float',
-            'extra': 'float',
-            'mta_tax': 'float',
-            'tip_amount': 'float',
-            'tolls_amount': 'float',
-            'improvement_surcharge': 'float',
-            'total_amount': 'float',
-            'congestion_surcharge': 'float',
-            'airport_fee': 'float'
-        }
-
         columns_names_mapping = {
             'VendorID': 'vendor_id',
             'tpep_pickup_datetime': 'tpep_pickup_datetime',
@@ -94,7 +73,7 @@ def extract_data():
             'RateCodeID': 'rate_code_id',
             'store_and_fwd_flag': 'store_and_fwd_flag',
             'PULocationID': 'pu_location_id',
-            'DOLocationID': 'do_loation_id',
+            'DOLocationID': 'do_location_id',
             'payment_type': 'payment_type',
             'fare_amount': 'fare_amount',
             'extra': 'extra',
@@ -107,7 +86,7 @@ def extract_data():
             'airport_fee': 'airport_fee',
         }
 
-
+        # Why not OS and env vars - Airflow hides passwords from logs, you can't print them to view!
         con.sql(f"""
             INSTALL httpfs;
             LOAD httpfs;
@@ -120,7 +99,6 @@ def extract_data():
             FROM read_parquet('{url_to_parquet_file}');
         """)
         columns_list_to_extract = ",".join([key +' as ' + columns_names_mapping[key] for key in columns_names_mapping])
-
         clean_data_condition = """VendorID in (1,2) and RateCodeID in (1,2,3,4,5,6) 
         and Store_and_fwd_flag in ('Y', 'N') and Payment_type in (1,2,3,4,5,6) and Trip_distance > 0 and Fare_amount > 0
         and tpep_pickup_datetime is not null and tpep_dropoff_datetime is not null and passenger_count > 0"""
@@ -144,11 +122,11 @@ def extract_data():
                 not ({clean_data_condition});""" )
 
         con.sql(f"""
-            COPY clean_data TO 's3://{bucket}/{prefix_clean}/{dt}/yellow_taxi_{dt}.parquet' (FORMAT PARQUET, CODEC SNAPPY);
+            COPY clean_data TO 's3://{bucket}/{prefix_clean}/yellow_taxi_{dt}.parquet' (FORMAT PARQUET, CODEC SNAPPY);
         """)
 
         con.sql(f"""
-            COPY dirty_data TO 's3://{bucket}/{prefix_dirty}/{dt}/yellow_taxi_{dt}.parquet' (FORMAT PARQUET, CODEC SNAPPY);
+            COPY dirty_data TO 's3://{bucket}/{prefix_dirty}/yellow_taxi_{dt}.parquet' (FORMAT PARQUET, CODEC SNAPPY);
         """)
 
 

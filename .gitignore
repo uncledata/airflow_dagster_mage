@@ -1,3 +1,4 @@
 logs
 .env
 airflow/dags/__pycache__
+db_files

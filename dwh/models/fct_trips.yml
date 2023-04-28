@@ -1,0 +1,7 @@
+
+version: 2
+
+models:
+  - name: fct_trips
+    description: OBT approach on yellow taxi trips data
+
