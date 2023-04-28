@@ -36,6 +36,7 @@ def extract_data():
     download_dir = Dataset(f"s3://{bucket}/{prefix_raw}/")
     clean_dir = Dataset(f"s3://{bucket}/{prefix_clean}/")
     dirty_dir = Dataset(f"s3://{bucket}/{prefix_dirty}/")
+    
     @task(outlets=[download_dir])
     def download_save_file(bucket_name, prefix_raw, **kwargs):
         #download file from api
@@ -52,7 +53,6 @@ def extract_data():
 
         hook.load_bytes(data, key=key_name, bucket_name=bucket_name)
         return file_name
-   
 
 
     @task(outlets=[clean_dir, dirty_dir])
@@ -60,19 +60,53 @@ def extract_data():
         import duckdb
         con = duckdb.connect(database=":memory:", read_only=False)
 
-        print (url_to_parquet_file)
         dt = kwargs['data_interval_start'].format('Y-MM')
         s3_details = BaseHook.get_connection(conn_id="aws_default")
-        print(f"""
-            INSTALL httpfs;
-            LOAD httpfs;
-            SET s3_access_key_id='{s3_details.login}';
-            SET s3_secret_access_key='{s3_details.password}';
-            SET s3_use_ssl=false;
-            CREATE VIEW raw_events AS
-            SELECT *
-            FROM read_parquet('{url_to_parquet_file}');
-        """)
+
+        columns_types = {
+            'VendorID': 'int',
+            'tpep_pickup_datetime': 'timestamp',
+            'tpep_dropoff_datetime': 'timestamp',
+            'passenger_count': 'int',
+            'trip_distance': 'float',
+            'RateCodeID': 'int',
+            'store_and_fwd_flag': 'string',
+            'PULocationID': 'int',
+            'DOLocationID': 'int',
+            'payment_type': 'int',
+            'fare_amount': 'float',
+            'extra': 'float',
+            'mta_tax': 'float',
+            'tip_amount': 'float',
+            'tolls_amount': 'float',
+            'improvement_surcharge': 'float',
+            'total_amount': 'float',
+            'congestion_surcharge': 'float',
+            'airport_fee': 'float'
+        }
+
+        columns_names_mapping = {
+            'VendorID': 'vendor_id',
+            'tpep_pickup_datetime': 'tpep_pickup_datetime',
+            'tpep_dropoff_datetime': 'tpep_dropoff_datetime',
+            'passenger_count': 'passenger_count',
+            'trip_distance': 'trip_distance',
+            'RateCodeID': 'rate_code_id',
+            'store_and_fwd_flag': 'store_and_fwd_flag',
+            'PULocationID': 'pu_location_id',
+            'DOLocationID': 'do_loation_id',
+            'payment_type': 'payment_type',
+            'fare_amount': 'fare_amount',
+            'extra': 'extra',
+            'mta_tax': 'mta_tax',
+            'tip_amount': 'tip_amount',
+            'tolls_amount': 'tolls_amount',
+            'improvement_surcharge': 'improvement_surcharge',
+            'total_amount': 'total_amount',
+            'congestion_surcharge': 'congestion_surcharge',
+            'airport_fee': 'airport_fee',
+        }
+
 
         con.sql(f"""
             INSTALL httpfs;
@@ -85,11 +119,30 @@ def extract_data():
             SELECT *
             FROM read_parquet('{url_to_parquet_file}');
         """)
-        print("exec done")
-        con.sql("""create view clean_data as select * from raw_events""" )
-        print("clean done")
-        con.sql("""create view dirty_data as select * from raw_events""" )
-        print("dirty done")
+        columns_list_to_extract = ",".join([key +' as ' + columns_names_mapping[key] for key in columns_names_mapping])
+
+        clean_data_condition = """VendorID in (1,2) and RateCodeID in (1,2,3,4,5,6) 
+        and Store_and_fwd_flag in ('Y', 'N') and Payment_type in (1,2,3,4,5,6) and Trip_distance > 0 and Fare_amount > 0
+        and tpep_pickup_datetime is not null and tpep_dropoff_datetime is not null and passenger_count > 0"""
+
+        con.sql(f"""create view clean_data as 
+            select 
+                {columns_list_to_extract},
+                {dt} as row_belongs_to_period 
+            from 
+                raw_events 
+            where 
+                {clean_data_condition};""" )
+
+        con.sql(f"""create view dirty_data as 
+            select 
+                {columns_list_to_extract},
+                {dt} as row_belongs_to_period 
+            from
+              raw_events
+            where
+                not ({clean_data_condition});""" )
+
         con.sql(f"""
             COPY clean_data TO 's3://{bucket}/{prefix_clean}/{dt}/yellow_taxi_{dt}.parquet' (FORMAT PARQUET, CODEC SNAPPY);
         """)
