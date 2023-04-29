@@ -1,0 +1,8 @@
+duckdb
+dbt-core
+dbt-duckdb
+dagit
+dagster-aws
+dagster-duckdb
+dagster-postgres
+dagster-docker
