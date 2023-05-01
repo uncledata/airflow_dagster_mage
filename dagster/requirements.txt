@@ -6,3 +6,4 @@ dagster-aws
 dagster-duckdb
 dagster-postgres
 dagster-docker
+dagster-dbt

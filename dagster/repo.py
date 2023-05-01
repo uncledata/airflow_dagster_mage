@@ -2,18 +2,16 @@ from dagster import (
     asset,
     Definitions,
     MonthlyPartitionsDefinition,
-    multi_asset,
-    AssetOut,
-    AssetIn,
     define_asset_job,
     ScheduleDefinition,
-    AssetMaterialization,
 )
 
+from dagster_dbt import dbt_cli_resource
+from dagster_dbt import load_assets_from_dbt_project
+from dagster_aws.s3.resources import s3_resource
+from dagster import file_relative_path
 import requests
 import os
-
-from dagster_aws.s3.resources import s3_resource
 
 partitions_def = MonthlyPartitionsDefinition(start_date="2022-12", fmt="%Y-%m")
 
@@ -34,8 +32,8 @@ def yellow_tripdata_raw(context):
     s3_client.put_object(Bucket=bucket, Key=key_name, Body=data)
     
 
-@asset(partitions_def=partitions_def, non_argument_deps={"yellow_tripdata_raw"},)
-def clean_data(
+@asset(partitions_def=partitions_def, non_argument_deps={"yellow_tripdata_raw"}, key_prefix=["yellow_taxi"],)
+def clean(
     context
 ):
     bucket = "tomas-data-lake"
@@ -107,7 +105,7 @@ def clean_data(
 
 
 @asset(partitions_def=partitions_def, non_argument_deps={"yellow_tripdata_raw"},)
-def dirty_data(
+def dirty(
     context
 ):
     bucket = "tomas-data-lake"
@@ -190,8 +188,25 @@ s3 = s3_resource.configured(
         "aws_secret_access_key": {"env": "S3_ACCESS_KEY_SECRET"},
     },
 )
+
+DBT_PROJECT_PATH = file_relative_path(__file__, "/opt/dagster/dwh")
+DBT_PROFILES = file_relative_path(__file__, "/opt/dagster/")
+
+
+
+dbt_assets = load_assets_from_dbt_project(
+    project_dir=DBT_PROJECT_PATH, profiles_dir=DBT_PROFILES, key_prefix=["yellow_taxi"], use_build_command=True
+)
+
 defs = Definitions(
-    assets=[yellow_tripdata_raw, clean_data, dirty_data],
-    resources={"s3": s3},
+    assets=[yellow_tripdata_raw, clean, dirty]+dbt_assets,
+    resources={"s3": s3, "dbt": dbt_cli_resource.configured(
+        {
+            "project_dir":DBT_PROJECT_PATH,
+            "profiles_dir": DBT_PROFILES,
+        },
+    ),},
     schedules=[monthly_refresh_schedule],
 )
+
+

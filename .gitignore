@@ -2,4 +2,5 @@ logs
 .env
 airflow/dags/__pycache__
 db_files
+db_files_dagster
 */.env

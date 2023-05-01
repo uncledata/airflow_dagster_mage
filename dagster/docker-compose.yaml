@@ -31,6 +31,10 @@ services:
         S3_ACCESS_KEY_SECRET: ""
       ports:
         - "8888:8888"
+      volumes: # Make docker client accessible so we can terminate containers from dagit
+      - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/opt/dagster/dwh
+      - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/db_files
+      - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/opt/dagster/profiles.yml
       networks:
         - docker_example_network
 
@@ -64,9 +68,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
       - ./dagster-demo:/opt/dagster/app
-      - /Users/:/opt/dagster/dwh
       - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/opt/dagster/dwh
-      - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/dagster/db_files
+      - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/db_files
       - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/opt/dagster/profiles.yml
     networks:
       - docker_example_network
@@ -92,6 +95,9 @@ services:
         S3_ACCESS_KEY_SECRET: ""
       volumes: # Make docker client accessible so we can launch containers using host docker
         - /var/run/docker.sock:/var/run/docker.sock
+        - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/opt/dagster/dwh
+        - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/db_files
+        - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/opt/dagster/profiles.yml
       networks:
         - docker_example_network
       depends_on:
