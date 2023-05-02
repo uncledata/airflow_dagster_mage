@@ -4,3 +4,11 @@ airflow/dags/__pycache__
 db_files
 db_files_dagster
 */.env
+mage.ai/mage-demo/.file_versions
+mage.ai/mage-demo/*/*/__pycache__
+dwh/.mage_temp_profiles
+profiles.yml
+/*/profiles.yml
+/*/*/profiles.yml
+mage.ai/mage-demo/.user.yml
+dwh/.user.yml
