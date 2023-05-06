@@ -84,6 +84,6 @@ type: python
 updated_at: '2023-05-05 16:18:35'
 uuid: shy_smoke
 variables:
-  AWS_ACCESS_KEY_ID: AKIASC4I2QLQKHYE6WH5
-  AWS_SECRET_ACCESS_KEY: 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
+  AWS_ACCESS_KEY_ID: 
+  AWS_SECRET_ACCESS_KEY: 
 widgets: []
