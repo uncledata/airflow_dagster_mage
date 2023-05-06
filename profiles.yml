@@ -1,0 +1,14 @@
+dwh:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: '/opt/db_files/dwh.duckdb'
+      extensions:
+        - httpfs
+        - parquet
+      settings:
+        s3_region: "eu-central-1"
+        s3_access_key_id: ""
+        s3_secret_access_key: ""
+       

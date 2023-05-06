@@ -1,0 +1,8 @@
+version: 2
+sources:
+  - name: yellow_taxi
+    meta:
+      external_location: "s3://tomas-data-lake/yellow_taxi/{name}/*.parquet"
+    tables:
+      - name: clean
+      - name: dirty

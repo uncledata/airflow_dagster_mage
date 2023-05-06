@@ -1,0 +1,7 @@
+sources:
+- name: mage_dwh
+  tables:
+  - name: polished_river_clean
+  - name: polished_river_dbt_seed
+  - name: polished_river_dbt_seeds
+version: 2

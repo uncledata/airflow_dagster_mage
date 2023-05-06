@@ -1,0 +1,111 @@
+version: "3.7"
+
+services:
+  # This service runs the postgres DB used by dagster for run storage, schedule storage,
+  # and event log storage.
+  postgresql:
+    image: postgres:11
+    container_name: docker_example_postgresql
+    environment:
+      POSTGRES_USER: "postgres_user"
+      POSTGRES_PASSWORD: "postgres_password"
+      POSTGRES_DB: "postgres_db"
+    networks:
+      - docker_example_network
+
+  code_service:
+      platform: linux/amd64
+      build:
+        context: .
+        dockerfile: ./Dockerfile_pipeline_code
+      container_name: code_service
+      image: code_service_image
+      restart: always
+      environment:
+        DAGSTER_PG_USERNAME: "postgres_user"
+        DAGSTER_PG_PASSWORD: "postgres_password"
+        DAGSTER_PG_DB: "postgres_db"
+        DAGSTER_PG_HOST: postgresql
+        DAGSTER_CURRENT_IMAGE: "code_service_image"
+        S3_ACCESS_KEY_ID: ""
+        S3_ACCESS_KEY_SECRET: ""
+      ports:
+        - "8888:8888"
+      volumes: # Make docker client accessible so we can terminate containers from dagit
+      - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/opt/dagster/dwh
+      - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/db_files
+      - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/opt/dagster/profiles.yml
+      networks:
+        - docker_example_network
+
+  web_ui:
+    platform: linux/amd64
+    build:
+      context: .  
+      dockerfile: ./Dockerfile_dagster
+    entrypoint:
+      - dagit
+      - -h
+      - "0.0.0.0"
+      - -p
+      - "3000"
+      - -w
+      - workspace.yaml
+    container_name: web_ui
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    environment:
+      DAGSTER_PG_USERNAME: "postgres_user"
+      DAGSTER_PG_PASSWORD: "postgres_password"
+      DAGSTER_PG_DB: "postgres_db"
+      DAGSTER_PG_HOST: postgresql
+      S3_ACCESS_KEY_ID: ""
+      S3_ACCESS_KEY_SECRET: ""
+
+    volumes: # Make docker client accessible so we can terminate containers from dagit
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
+      - ./dagster-demo:/opt/dagster/app
+      - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/opt/dagster/dwh
+      - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/db_files
+      - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/opt/dagster/profiles.yml
+    networks:
+      - docker_example_network
+    depends_on:
+      - postgresql
+
+  dagster_daemon:
+      platform: linux/amd64
+      build:
+        context: .
+        dockerfile: ./Dockerfile_dagster
+      entrypoint:
+        - dagster-daemon
+        - run
+      container_name: dagster_daemon
+      restart: on-failure
+      environment:
+        DAGSTER_PG_USERNAME: "postgres_user"
+        DAGSTER_PG_PASSWORD: "postgres_password"
+        DAGSTER_PG_DB: "postgres_db"
+        DAGSTER_PG_HOST: postgresql
+        S3_ACCESS_KEY_ID: ""
+        S3_ACCESS_KEY_SECRET: ""
+      volumes: # Make docker client accessible so we can launch containers using host docker
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/opt/dagster/dwh
+        - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/db_files
+        - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/opt/dagster/profiles.yml
+      networks:
+        - docker_example_network
+      depends_on:
+        - postgresql
+        - code_service
+
+
+networks:
+  docker_example_network:
+    driver: bridge
+    name: docker_example_network
