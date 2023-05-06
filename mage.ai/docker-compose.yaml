@@ -11,8 +11,6 @@ services:
       - POSTGRES_DB=mage
 
   server:
-    image: mageai/mageai
-    platform: linux/amd64
     build:
       context: .
       dockerfile: ./Dockerfile

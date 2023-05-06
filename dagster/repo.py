@@ -195,7 +195,7 @@ DBT_PROFILES = file_relative_path(__file__, "/opt/dagster/")
 
 
 dbt_assets = load_assets_from_dbt_project(
-    project_dir=DBT_PROJECT_PATH, profiles_dir=DBT_PROFILES, key_prefix=["yellow_taxi"], use_build_command=True
+    project_dir=DBT_PROJECT_PATH, profiles_dir=DBT_PROFILES, key_prefix=["yellow_taxi"] # If you want seeds: , use_build_command=True
 )
 
 defs = Definitions(

@@ -2,7 +2,7 @@ if 'transformer' not in globals():
     from mage_ai.data_preparation.decorators import transformer
 if 'test' not in globals():
     from mage_ai.data_preparation.decorators import test
-
+import os
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 @transformer
 def transform(*args, **kwargs):
@@ -41,8 +41,8 @@ def transform(*args, **kwargs):
         f"""
         INSTALL httpfs;
         LOAD httpfs;
-        SET s3_access_key_id="{get_secret_value('AWS_ACCESS_KEY_ID')}";
-        SET s3_secret_access_key="{get_secret_value('AWS_SECRET_ACCESS_KEY')}";
+        SET s3_access_key_id="{os.environ['AWS_ACCESS_KEY_ID']}";
+        SET s3_secret_access_key="{os.environ['AWS_SECRET_ACCESS_KEY']}";
         SET s3_region='eu-central-1';
         SET s3_use_ssl=false;
         CREATE VIEW raw_events AS

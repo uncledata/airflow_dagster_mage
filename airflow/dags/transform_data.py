@@ -27,14 +27,9 @@ clean_dir = Dataset(f"s3://{bucket}/{prefix_clean}/")
 @dag('dbt_dag', default_args=default_args, schedule=[clean_dir])
 def dbt_dag():
     # bash operator to run dbt seeds
-    dbt_seed = BashOperator(
-        task_id='dbt_seed',
-        bash_command='dbt seed  --project-dir /opt/airflow/dwh',
-        )
     fct_trips = BashOperator(
         task_id='fct_trips',
-        bash_command='dbt run --models fct_trips --project-dir /opt/airflow/dwh',
+        bash_command='cd /opt/airflow/dwh && dbt run --models fct_trips --profiles-dir /opt/airflow',
         outlets = [Dataset('duckdb://fct_trips')]
         )
-    dbt_seed >> fct_trips
 dbt_dag()

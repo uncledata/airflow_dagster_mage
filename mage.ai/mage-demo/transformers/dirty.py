@@ -43,8 +43,8 @@ def transform(*args, **kwargs):
         f"""
         INSTALL httpfs;
         LOAD httpfs;
-        SET s3_access_key_id="{get_secret_value('AWS_ACCESS_KEY_ID')}";
-        SET s3_secret_access_key="{get_secret_value('AWS_SECRET_ACCESS_KEY')}";
+        SET s3_access_key_id="{os.environ['AWS_ACCESS_KEY_ID']}";
+        SET s3_secret_access_key="{os.environ['AWS_SECRET_ACCESS_KEY']}";
         SET s3_region='eu-central-1';
         SET s3_use_ssl=false;
         CREATE VIEW raw_events AS
