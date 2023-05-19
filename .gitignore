@@ -12,3 +12,4 @@ profiles.yml
 /*/*/profiles.yml
 mage.ai/mage-demo/.user.yml
 dwh/.user.yml
+.DS_Store
