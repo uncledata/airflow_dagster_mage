@@ -1,9 +1,6 @@
-if 'transformer' not in globals():
-    from mage_ai.data_preparation.decorators import transformer
-if 'test' not in globals():
-    from mage_ai.data_preparation.decorators import test
+from .commons import partitions_def
+from dagster import asset
 import os
-from mage_ai.data_preparation.shared.secrets import get_secret_value
 
 def duckdb_query_export(table_name, prefix, bucket, is_dirty, url_to_parquet_file, dt):
         import duckdb
@@ -35,8 +32,8 @@ def duckdb_query_export(table_name, prefix, bucket, is_dirty, url_to_parquet_fil
         con.sql(f"""
             INSTALL httpfs;
             LOAD httpfs;
-            SET s3_access_key_id='{os.environ['AWS_ACCESS_KEY_ID']}';
-            SET s3_secret_access_key='{os.environ['AWS_SECRET_ACCESS_KEY']}';
+            SET s3_access_key_id='{os.environ['S3_ACCESS_KEY_ID']}';
+            SET s3_secret_access_key='{os.environ['S3_ACCESS_KEY_SECRET']}';
             SET s3_region='eu-central-1';
             SET s3_use_ssl=true;
             CREATE VIEW raw_events AS
@@ -60,13 +57,26 @@ def duckdb_query_export(table_name, prefix, bucket, is_dirty, url_to_parquet_fil
             COPY {table_name} TO 's3://{bucket}/{prefix}/yellow_taxi_{dt}.parquet';
         """)
 
-@transformer
-def transform(*args, **kwargs):
+@asset(partitions_def=partitions_def, non_argument_deps={"yellow_tripdata_raw"}, key_prefix=["yellow_taxi"],)
+def clean(
+    context
+):
+    partition_date_str = context.asset_partition_key_for_output()
     bucket = "tomas-data-lake"
     prefix_raw = "yellow_taxi/raw"
     prefix_clean = "yellow_taxi/clean"
-    dt = kwargs['execution_date'].strftime('%Y-%m')
-    url_to_parquet_file = f"s3://{bucket}/{prefix_raw}/{dt}/yellow_taxi_{dt}.parquet"
-    duckdb_query_export(table_name='clean_data', bucket=bucket, prefix=prefix_clean, is_dirty=False, url_to_parquet_file=url_to_parquet_file, dt=dt)
-    
+    url_to_parquet_file = f"s3://{bucket}/{prefix_raw}/{partition_date_str}/yellow_taxi_{partition_date_str}.parquet"
+    duckdb_query_export(table_name='dirty_data', bucket=bucket, prefix=prefix_clean, is_dirty=False, url_to_parquet_file=url_to_parquet_file, dt=partition_date_str)
+
+
+@asset(partitions_def=partitions_def, non_argument_deps={"yellow_tripdata_raw"},)
+def dirty(
+    context
+):
+    partition_date_str = context.asset_partition_key_for_output()
+    bucket = "tomas-data-lake"
+    prefix_raw = "yellow_taxi/raw"
+    prefix_dirty = "yellow_taxi/dirty"
+    url_to_parquet_file = f"s3://{bucket}/{prefix_raw}/{partition_date_str}/yellow_taxi_{partition_date_str}.parquet"
+    duckdb_query_export(table_name='dirty_data', bucket=bucket, prefix=prefix_dirty, is_dirty=True, url_to_parquet_file=url_to_parquet_file, dt=partition_date_str)
 

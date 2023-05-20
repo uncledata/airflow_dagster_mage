@@ -22,21 +22,8 @@ blocks:
   executor_type: local_python
   has_callback: false
   language: python
-  name: twilight silence
-  status: executed
-  type: data_loader
-  upstream_blocks: []
-  uuid: twilight_silence
-- all_upstream_blocks_executed: true
-  color: null
-  configuration: {}
-  downstream_blocks: []
-  executor_config: null
-  executor_type: local_python
-  has_callback: false
-  language: python
   name: dirty
-  status: updated
+  status: failed
   type: transformer
   upstream_blocks:
   - extract_yellow_taxi
@@ -45,7 +32,7 @@ blocks:
   color: null
   configuration: {}
   downstream_blocks:
-  - all_models
+  - dbt_seed_run
   executor_config: null
   executor_type: local_python
   has_callback: false
@@ -72,18 +59,32 @@ blocks:
   status: executed
   type: dbt
   upstream_blocks:
-  - clean
+  - dbt_seed_run
   uuid: all_models
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - all_models
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: dbt_seed_run
+  status: executed
+  type: data_loader
+  upstream_blocks:
+  - clean
+  uuid: dbt_seed_run
 callbacks: []
 data_integration: null
 description: null
+executor_config: {}
 executor_count: 1
+executor_type: null
 extensions: {}
 name: polished river
 type: python
-updated_at: '2023-05-05 16:18:35'
+updated_at: '2023-05-20 19:59:49'
 uuid: shy_smoke
-variables:
-  AWS_ACCESS_KEY_ID: 
-  AWS_SECRET_ACCESS_KEY: 
 widgets: []

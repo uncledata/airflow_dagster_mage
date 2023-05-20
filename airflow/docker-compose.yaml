@@ -78,9 +78,9 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
-    - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/opt/airflow/dwh
-    - /Users/tomas.peluritis/airflow_dagster_mage/db_files:/opt/db_files
-    - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/opt/airflow/profiles.yml
+    - /home/tomaspeluritis/projects/airflow_dagster_mage/dwh:/opt/airflow/dwh
+    - /home/tomaspeluritis/projects/airflow_dagster_mage/db_files:/opt/db_files
+    - /home/tomaspeluritis/projects/airflow_dagster_mage/profiles.yml:/opt/airflow/profiles.yml
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on

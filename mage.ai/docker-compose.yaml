@@ -16,17 +16,17 @@ services:
       dockerfile: ./Dockerfile
     command: "/app/run_app.sh mage start 'mage-demo'"
     environment:
-      AWS_ACCESS_KEY_ID: 
-      AWS_SECRET_ACCESS_KEY: 
+      AWS_ACCESS_KEY_ID: ""
+      AWS_SECRET_ACCESS_KEY: ""
       AWS_REGION: eu-central-1
       ENV: dev
       MAGE_DATABASE_CONNECTION_URL: postgresql+psycopg2://postgres:postgres@postgres-db:5432/mage
       DBT_PROFILES_DIR: /home/src/mage-demo/dbt
     volumes:
       - ./mage-demo:/home/src/mage-demo
-      - /Users/tomas.peluritis/airflow_dagster_mage/dwh:/home/src/mage-demo/dbt/dwh
-      - /Users/tomas.peluritis/airflow_dagster_mage/db_files_dagster:/opt/db_files
-      - /Users/tomas.peluritis/airflow_dagster_mage/profiles.yml:/home/src/mage-demo/dbt/profiles.yml
+      - /home/tomaspeluritis/projects/airflow_dagster_mage/dwh:/home/src/mage-demo/dbt/dwh
+      - /home/tomaspeluritis/projects/airflow_dagster_mage/db_files_dagster:/opt/db_files
+      - /home/tomaspeluritis/projects/airflow_dagster_mage/profiles.yml:/home/src/mage-demo/dbt/profiles.yml
     ports:
       - 6789:6789
     restart: on-failure:5

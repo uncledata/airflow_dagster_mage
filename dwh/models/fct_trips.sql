@@ -1,10 +1,3 @@
-{{
-  config(
-    materialized = 'incremental',
-    unique_key = 'row_belongs_to_period',
-    incremental_strategy= 'delete+insert',
-    )
-}}
 select
     coalesce(vendor_name, 'UNDEFINED') as vendor_name,
     tpep_pickup_datetime,
@@ -41,9 +34,5 @@ left join
     {{ ref("dim_taxi_zones") }} as do_zone
     on do_zone.location_id = clean.do_location_id
 left join {{ ref("dim_vendor") }} on dim_vendor.vendor_id = clean.vendor_id
-{% if is_incremental() %}
- where
-    row_belongs_to_period >= coalesce((select max(row_belongs_to_period) from {{ this }}), '1900-01-01')
-{% endif %}
 
 
