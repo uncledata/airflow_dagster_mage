@@ -1,0 +1,65 @@
+version: "3.9"
+services:
+  ### Prefect Database
+  database:
+    image: postgres:15.2-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=prefect
+    expose:
+      - 5432
+
+  ### Prefect Server API and UI
+  server:
+    platform: linux/amd64
+    build:
+      context: .  
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    restart: always
+    command:
+      - prefect
+      - server
+      - start
+    environment:
+      - PREFECT_UI_URL=http://127.0.0.0:4200/api
+      - PREFECT_API_URL=http://127.0.0.1:4200/api
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://postgres:postgres@database:5432/prefect
+    ports:
+      - 4200:4200
+    depends_on:
+      database:
+        condition: service_started
+    volumes:
+      - ./flows/:/opt/prefect/flows/
+      - /Users/tomaspeluritis/airflow_dagster_mage/dwh:/opt/prefect/dwh
+      - /Users/tomaspeluritis/airflow_dagster_mage/db_files:/opt/db_files
+
+  ## Prefect Agent
+  agent:
+    platform: linux/amd64
+    build:
+      context: .  
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    restart: always
+    command: 
+      - prefect
+      - agent
+      - start
+      - -q
+      - default
+    environment:
+      - PREFECT_API_URL=http://server:4200/api
+    volumes:
+      - ./flows/:/opt/prefect/flows/
+      - /Users/tomaspeluritis/airflow_dagster_mage/dwh:/opt/prefect/dwh
+      - /Users/tomaspeluritis/airflow_dagster_mage/db_files:/opt/db_files
+networks:
+  default:
+    name: prefect-network
