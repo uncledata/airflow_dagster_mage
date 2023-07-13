@@ -1,0 +1,41 @@
+###
+### A complete description of a Prefect Deployment for flow 'extract_and_load_to_s3'
+###
+name: yellow_taxi_flow
+description: null
+version: 1c19c345aeb978d39bbd20bd7ec086ad
+# The work queue that will handle this deployment's runs
+work_queue_name: default
+work_pool_name: null
+tags: []
+parameters: {}
+schedule: null
+is_schedule_active: null
+infra_overrides: {}
+infrastructure:
+  type: process
+  env: {}
+  labels: {}
+  name: null
+  command: null
+  stream_output: true
+  working_dir: null
+  block_type_slug: process
+  _block_type_slug: process
+
+###
+### DO NOT EDIT BELOW THIS LINE
+###
+flow_name: extract_and_load_to_s3
+manifest_path: null
+storage: null
+path: /opt/prefect/flows
+entrypoint: extract_and_load_to_s3.py:extract_and_load_to_s3
+parameter_openapi_schema:
+  title: Parameters
+  type: object
+  properties: {}
+  required: null
+  definitions: null
+timestamp: '2023-07-12T13:14:19.761192+00:00'
+triggers: []

@@ -1,0 +1,5 @@
+boto3
+prefect-aws
+dbt-core==1.5.0
+dbt-duckdb==1.5.0
+prefect-dask
